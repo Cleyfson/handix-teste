@@ -71,35 +71,19 @@
         v-else
         :contacts="store.contacts"
         @edit="openEdit"
-        @delete="confirmDelete"
+        @delete="openDeleteConfirm"
       />
     </main>
 
-    <!-- Toast -->
-    <transition
-      enter-active-class="transition ease-out duration-200"
-      enter-from-class="opacity-0 translate-y-2"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition ease-in duration-150"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="toast.message"
-        :class="[
-          'fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg text-sm font-semibold',
-          toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-        ]"
-      >
-        <svg v-if="toast.type === 'success'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-        </svg>
-        <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        {{ toast.message }}
-      </div>
-    </transition>
+    <!-- Delete confirmation dialog -->
+    <ConfirmDialog
+      :visible="!!contactToDelete"
+      :title="`Delete ${contactToDelete?.name ?? 'contact'}?`"
+      message="This contact will be permanently removed. This action cannot be undone."
+      :loading="deleting"
+      @confirm="executeDelete"
+      @cancel="contactToDelete = null"
+    />
 
     <!-- Form modal -->
     <ContactForm
@@ -110,6 +94,9 @@
       @close="closeForm"
       @submit="onSubmit"
     />
+
+    <!-- Toasts -->
+    <ToastNotification ref="toastRef" />
   </div>
 </template>
 
@@ -118,6 +105,8 @@ import { ref, onMounted } from 'vue'
 import { useContactStore } from '../stores/contactStore.js'
 import ContactList from '../components/ContactList.vue'
 import ContactForm from '../components/ContactForm.vue'
+import ConfirmDialog from '../components/ConfirmDialog.vue'
+import ToastNotification from '../components/ToastNotification.vue'
 
 const store = useContactStore()
 
@@ -125,13 +114,14 @@ const search = ref('')
 const showForm = ref(false)
 const editing = ref(null)
 const formErrors = ref({})
-const toast = ref({ message: '', type: 'success' })
+const contactToDelete = ref(null)
+const deleting = ref(false)
+const toastRef = ref(null)
 
 let searchTimeout = null
 
-function showToast(message, type = 'success') {
-  toast.value = { message, type }
-  setTimeout(() => (toast.value = { message: '', type: 'success' }), 3000)
+function toast(message, type = 'success') {
+  toastRef.value?.add(message, type)
 }
 
 function onSearch() {
@@ -158,27 +148,37 @@ function closeForm() {
 }
 
 async function onSubmit(data) {
-  const result = editing.value
+  const isEditing = !!editing.value
+  const result = isEditing
     ? await store.updateContact(editing.value.id, data)
     : await store.createContact(data)
 
   if (result.success) {
-    showToast(editing.value ? 'Contact updated.' : 'Contact created.')
+    toast(isEditing ? 'Contact updated successfully.' : 'Contact created successfully.')
     closeForm()
   } else {
     formErrors.value = result.errors ?? {}
   }
 }
 
-async function confirmDelete(contact) {
-  if (!confirm(`Delete "${contact.name}"?`)) return
-  const result = await store.deleteContact(contact.id)
+function openDeleteConfirm(contact) {
+  contactToDelete.value = contact
+}
+
+async function executeDelete() {
+  deleting.value = true
+  const result = await store.deleteContact(contactToDelete.value.id)
+  deleting.value = false
+
   if (result.success) {
-    showToast('Contact deleted.')
+    toast('Contact deleted successfully.')
+    contactToDelete.value = null
   } else {
-    showToast(store.error ?? 'Failed to delete.', 'error')
+    toast(store.error ?? 'Failed to delete contact.', 'error')
+    contactToDelete.value = null
   }
 }
 
 onMounted(() => store.fetchContacts())
 </script>
+

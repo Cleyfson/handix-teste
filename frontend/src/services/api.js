@@ -8,17 +8,4 @@ const api = axios.create({
   },
 })
 
-export default {
-  getContacts(search = '') {
-    return api.get('/contacts', { params: search ? { search } : {} })
-  },
-  createContact(data) {
-    return api.post('/contacts', data)
-  },
-  updateContact(id, data) {
-    return api.put(`/contacts/${id}`, data)
-  },
-  deleteContact(id) {
-    return api.delete(`/contacts/${id}`)
-  },
-}
+export default api

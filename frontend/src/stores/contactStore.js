@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../services/api.js'
 
+
 export const useContactStore = defineStore('contacts', () => {
   const contacts = ref([])
   const loading = ref(false)
@@ -12,7 +13,7 @@ export const useContactStore = defineStore('contacts', () => {
     loading.value = true
     error.value = null
     try {
-      const { data } = await api.getContacts(search)
+      const { data } = await api.get('/contacts', { params: search ? { search } : {} })
       contacts.value = data
     } catch (err) {
       error.value = err.response?.data?.message ?? 'Failed to load contacts.'
@@ -25,7 +26,7 @@ export const useContactStore = defineStore('contacts', () => {
     saving.value = true
     error.value = null
     try {
-      const { data: created } = await api.createContact(data)
+      const { data: created } = await api.post('/contacts', data)
       contacts.value.push(created)
       return { success: true }
     } catch (err) {
@@ -43,7 +44,7 @@ export const useContactStore = defineStore('contacts', () => {
     saving.value = true
     error.value = null
     try {
-      const { data: updated } = await api.updateContact(id, data)
+      const { data: updated } = await api.put(`/contacts/${id}`, data)
       const index = contacts.value.findIndex((c) => c.id === id)
       if (index !== -1) contacts.value[index] = updated
       return { success: true }
@@ -61,7 +62,7 @@ export const useContactStore = defineStore('contacts', () => {
   async function deleteContact(id) {
     error.value = null
     try {
-      await api.deleteContact(id)
+      await api.delete(`/contacts/${id}`)
       contacts.value = contacts.value.filter((c) => c.id !== id)
       return { success: true }
     } catch (err) {
