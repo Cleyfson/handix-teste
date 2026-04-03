@@ -1,7 +1,7 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import ContactsView from './views/ContactsView.vue'
 </script>
 
 <template>
-  <HelloWorld />
+  <ContactsView />
 </template>
