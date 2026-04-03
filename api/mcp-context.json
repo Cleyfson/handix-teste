@@ -1,0 +1,33 @@
+{
+  "project": "Handix Contact Manager",
+  "architecture": "DDD",
+  "backend": "Laravel 11",
+  "frontend": "Vue 3",
+  "domains": [
+    {
+      "name": "Contact",
+      "description": "Gerenciamento de contatos"
+    }
+  ],
+  "entities": {
+    "Contact": {
+      "fields": ["id", "name", "email", "phone", "notes"],
+      "rules": {
+        "name": "required",
+        "email": "required|unique"
+      }
+    }
+  },
+  "use_cases": [
+    "CreateContact",
+    "ListContacts",
+    "UpdateContact",
+    "DeleteContact"
+  ],
+  "layers": {
+    "Domain": "Business rules and repository interfaces. No Eloquent.",
+    "Application": "Use cases orchestrating domain logic.",
+    "Infra": "Eloquent implementations of repository interfaces.",
+    "Http": "Controllers, Form Requests, and route definitions."
+  }
+}
