@@ -2,6 +2,7 @@
 
 namespace App\Infra\Repositories;
 
+use App\Domain\Entities\Contact as ContactEntity;
 use App\Domain\Repositories\ContactRepositoryInterface;
 use App\Models\Contact;
 
@@ -18,38 +19,63 @@ class EloquentContactRepository implements ContactRepositoryInterface
             });
         }
 
-        return $query->orderBy('name')->get()->toArray();
+        return $query->orderBy('name')->get()->map(fn($m) => $this->toEntity($m))->all();
     }
 
-    public function findById(int $id): ?array
+    public function findById(int $id): ?ContactEntity
     {
         $contact = Contact::find($id);
 
-        return $contact?->toArray();
+        return $contact ? $this->toEntity($contact) : null;
     }
 
-    public function findByEmail(string $email): ?array
+    public function findByEmail(string $email): ?ContactEntity
     {
         $contact = Contact::where('email', $email)->first();
 
-        return $contact?->toArray();
+        return $contact ? $this->toEntity($contact) : null;
     }
 
-    public function create(array $data): array
+    public function create(ContactEntity $contact): ContactEntity
     {
-        return Contact::create($data)->toArray();
+        $model = Contact::create([
+            'name'  => $contact->getName(),
+            'email' => $contact->getEmail(),
+            'phone' => $contact->getPhone(),
+            'notes' => $contact->getNotes(),
+        ]);
+
+        return $this->toEntity($model);
     }
 
-    public function update(int $id, array $data): array
+    public function update(int $id, ContactEntity $contact): ContactEntity
     {
-        $contact = Contact::findOrFail($id);
-        $contact->update($data);
+        $model = Contact::findOrFail($id);
 
-        return $contact->fresh()->toArray();
+        $model->update([
+            'name'  => $contact->getName(),
+            'email' => $contact->getEmail(),
+            'phone' => $contact->getPhone(),
+            'notes' => $contact->getNotes(),
+        ]);
+
+        return $this->toEntity($model->fresh());
     }
 
     public function delete(int $id): void
     {
         Contact::findOrFail($id)->delete();
+    }
+
+    private function toEntity(Contact $model): ContactEntity
+    {
+        return (new ContactEntity())
+            ->setId($model->id)
+            ->setName($model->name)
+            ->setEmail($model->email)
+            ->setPhone($model->phone)
+            ->setNotes($model->notes)
+            ->setCreatedAt($model->created_at?->toIso8601String())
+            ->setUpdatedAt($model->updated_at?->toIso8601String());
     }
 }

@@ -5,17 +5,18 @@ namespace App\Http\Controllers;
 use App\Application\UseCases\Contact\CreateContactUseCase;
 use App\Application\UseCases\Contact\DeleteContactUseCase;
 use App\Application\UseCases\Contact\ListContactsUseCase;
+use App\Application\UseCases\Contact\ShowContactUseCase;
 use App\Application\UseCases\Contact\UpdateContactUseCase;
 use App\Http\Requests\StoreContactRequest;
 use App\Http\Requests\UpdateContactRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ContactController extends Controller
 {
     public function __construct(
         private readonly ListContactsUseCase $listContacts,
+        private readonly ShowContactUseCase $showContact,
         private readonly CreateContactUseCase $createContact,
         private readonly UpdateContactUseCase $updateContact,
         private readonly DeleteContactUseCase $deleteContact,
@@ -35,13 +36,9 @@ class ContactController extends Controller
         return response()->json($contact, 201);
     }
 
-    public function show(int $id): JsonResponse
+    public function show(int $contact): JsonResponse
     {
-        // Direct repository lookup not exposed; use list for simplicity.
-        // Delegated to the model for a thin show action.
-        $contact = \App\Models\Contact::findOrFail($id);
-
-        return response()->json($contact);
+        return response()->json($this->showContact->execute($contact));
     }
 
     public function update(UpdateContactRequest $request, int $contact): JsonResponse
@@ -58,3 +55,4 @@ class ContactController extends Controller
         return response()->json(null, 204);
     }
 }
+

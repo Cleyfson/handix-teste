@@ -1,8 +1,11 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => $e->getMessage(),
@@ -24,13 +27,13 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         });
 
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Resource not found.'], 404);
             }
         });
 
-        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+        $exceptions->render(function (\Throwable $e, Request $request) {
             if ($request->expectsJson()) {
                 $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
                 return response()->json(['message' => $e->getMessage()], $status);

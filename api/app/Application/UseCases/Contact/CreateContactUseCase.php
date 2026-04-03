@@ -2,6 +2,7 @@
 
 namespace App\Application\UseCases\Contact;
 
+use App\Domain\Entities\Contact;
 use App\Domain\Repositories\ContactRepositoryInterface;
 use Illuminate\Validation\ValidationException;
 
@@ -11,7 +12,7 @@ class CreateContactUseCase
         private readonly ContactRepositoryInterface $repository
     ) {}
 
-    public function execute(array $data): array
+    public function execute(array $data): Contact
     {
         if ($this->repository->findByEmail($data['email'])) {
             throw ValidationException::withMessages([
@@ -19,6 +20,6 @@ class CreateContactUseCase
             ]);
         }
 
-        return $this->repository->create($data);
+        return $this->repository->create(Contact::fromArray($data));
     }
 }
