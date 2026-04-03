@@ -1,5 +1,6 @@
 # Environment
 api/.env
+frontend/.env
 
 # Dependencies
 api/vendor/
