@@ -3,8 +3,8 @@
 namespace App\Application\UseCases\Contact;
 
 use App\Domain\Entities\Contact;
+use App\Domain\Exceptions\DuplicateEmailException;
 use App\Domain\Repositories\ContactRepositoryInterface;
-use Illuminate\Validation\ValidationException;
 
 class UpdateContactUseCase
 {
@@ -17,9 +17,7 @@ class UpdateContactUseCase
         $existing = $this->repository->findByEmail($data['email'] ?? '');
 
         if ($existing && $existing->getId() !== $id) {
-            throw ValidationException::withMessages([
-                'email' => ['The email has already been taken.'],
-            ]);
+            throw new DuplicateEmailException();
         }
 
         return $this->repository->update($id, Contact::fromArray($data));

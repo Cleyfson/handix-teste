@@ -3,9 +3,9 @@
 namespace App\Application\UseCases\Auth;
 
 use App\Domain\Entities\User;
+use App\Domain\Exceptions\DuplicateEmailException;
 use App\Domain\Repositories\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class RegisterUserUseCase
 {
@@ -16,9 +16,7 @@ class RegisterUserUseCase
     public function execute(string $name, string $email, string $password): array
     {
         if ($this->repository->findByEmail($email)) {
-            throw ValidationException::withMessages([
-                'email' => ['O e-mail informado já está em uso.'],
-            ]);
+            throw new DuplicateEmailException('O e-mail informado já está em uso.');
         }
 
         $user = $this->repository->create($name, $email, Hash::make($password));
