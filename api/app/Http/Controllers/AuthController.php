@@ -2,47 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\UseCases\Auth\LoginUserUseCase;
+use App\Application\UseCases\Auth\RegisterUserUseCase;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function __construct(
+        private readonly RegisterUserUseCase $registerUser,
+        private readonly LoginUserUseCase $loginUser,
+    ) {}
+
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
-            'password'              => 'required|string|min:8|confirmed',
-        ]);
+        $payload = $this->registerUser->execute(
+            $request->validated('name'),
+            $request->validated('email'),
+            $request->validated('password'),
+        );
 
-        $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
-        ]);
-
-        $token = auth('api')->login($user);
-
-        return $this->tokenResponse($token, 201);
+        return response()->json($payload, 201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
+        $payload = $this->loginUser->execute(
+            $request->validated('email'),
+            $request->validated('password'),
+        );
 
-        if (!$token = auth('api')->attempt($credentials)) {
-            throw ValidationException::withMessages([
-                'email' => ['Credenciais inválidas.'],
-            ]);
-        }
-
-        return $this->tokenResponse($token);
+        return response()->json($payload);
     }
 
     public function logout(): JsonResponse
@@ -55,15 +46,5 @@ class AuthController extends Controller
     public function me(): JsonResponse
     {
         return response()->json(auth('api')->user());
-    }
-
-    private function tokenResponse(string $token, int $status = 200): JsonResponse
-    {
-        return response()->json([
-            'access_token' => $token,
-            'token_type'   => 'bearer',
-            'expires_in'   => auth('api')->factory()->getTTL() * 60,
-            'user'         => auth('api')->user(),
-        ], $status);
     }
 }
