@@ -1,7 +1,5 @@
-<script setup>
-import ContactsView from './views/ContactsView.vue'
-</script>
+<script setup></script>
 
 <template>
-  <ContactsView />
+  <RouterView />
 </template>

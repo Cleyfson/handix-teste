@@ -16,6 +16,15 @@
           </div>
         </div>
         <span class="text-xs text-slate-400 font-medium">{{ store.contacts.length }} contact{{ store.contacts.length !== 1 ? 's' : '' }}</span>
+        <button
+          @click="handleLogout"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 rounded-lg transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+          </svg>
+          Sair
+        </button>
       </div>
     </header>
 
@@ -102,13 +111,22 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useContactStore } from '../stores/contactStore.js'
+import { useAuthStore } from '../stores/authStore.js'
 import ContactList from '../components/ContactList.vue'
 import ContactForm from '../components/ContactForm.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 import ToastNotification from '../components/ToastNotification.vue'
 
+const router = useRouter()
 const store = useContactStore()
+const auth = useAuthStore()
+
+async function handleLogout() {
+  await auth.logout()
+  router.push('/login')
+}
 
 const search = ref('')
 const showForm = ref(false)
