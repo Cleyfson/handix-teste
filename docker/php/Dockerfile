@@ -26,9 +26,14 @@ RUN docker-php-ext-install \
 # Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-
 # Create non-root user matching host uid/gid pattern
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -s /bin/bash -D appuser
 
-USER appuser
+WORKDIR /var/www/html
+
+# Entrypoint fixes storage/cache permissions then drops to appuser
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["php-fpm"]
