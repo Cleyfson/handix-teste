@@ -2,25 +2,28 @@
 
 namespace App\Application\UseCases\Auth;
 
-use Illuminate\Validation\ValidationException;
+use App\Application\Contracts\JwtAuthInterface;
+use App\Domain\Exceptions\InvalidCredentialsException;
 
 class LoginUserUseCase
 {
+    public function __construct(
+        private readonly JwtAuthInterface $auth,
+    ) {}
+
     public function execute(string $email, string $password): array
     {
-        $token = auth('api')->attempt(['email' => $email, 'password' => $password]);
+        $token = $this->auth->attempt($email, $password);
 
         if (!$token) {
-            throw ValidationException::withMessages([
-                'email' => ['Credenciais inválidas.'],
-            ]);
+            throw new InvalidCredentialsException('Credenciais inválidas.');
         }
 
         return [
             'access_token' => $token,
             'token_type'   => 'bearer',
-            'expires_in'   => auth('api')->factory()->getTTL() * 60,
-            'user'         => auth('api')->user(),
+            'expires_in'   => $this->auth->getTTL(),
+            'user'         => $this->auth->getCurrentUser(),
         ];
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Exceptions\DuplicateEmailException;
+use App\Domain\Exceptions\InvalidCredentialsException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -61,6 +62,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => $e->getMessage(),
                     'errors'  => [$e->getField() => [$e->getMessage()]],
+                ], 422);
+            }
+        });
+
+        $exceptions->render(function (InvalidCredentialsException $e, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors'  => ['email' => [$e->getMessage()]],
                 ], 422);
             }
         });
